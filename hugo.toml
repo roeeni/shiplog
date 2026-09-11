@@ -1,4 +1,4 @@
-baseURL = "https://GITHUB_USER.github.io/shiplog/"
+baseURL = "https://roeeni.github.io/shiplog/"
 languageCode = "en-us"
 title = "Ship Log"
 theme = "PaperMod"
@@ -31,7 +31,7 @@ Title = "Ship Log"
 Content = "Every project, documented. TL;DR plus the technical stuff."
 
 [params.editPost]
-URL = "https://github.com/GITHUB_USER/shiplog/tree/master/content/posts"
+URL = "https://github.com/roeeni/shiplog/tree/master/content/posts"
 Text = "Suggest a change"
 appendFilePath = true
 
