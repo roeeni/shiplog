@@ -6,7 +6,7 @@ Spec: `docs/superpowers/specs/2026-09-11-shiplog-design.md`
 
 1. **Hugo scaffold** (repo root = `makemoney/`)
    - `hugo.toml`: title "Ship Log", baseURL placeholder, tags enabled, summary divider default
-   - Minimal custom layout (no external theme dependency): `layouts/` — list page (title, date, TL;DR via `<!--more-->`), single post page, base template, RSS on
+   - **PaperMod theme** via Hugo modules (no git submodules): dark mode, search, RSS, TOC built in; minimal `layouts/` overrides only where needed
    - `content/posts/` empty
 
 2. **Scripts** (`scripts/`)
@@ -15,7 +15,7 @@ Spec: `docs/superpowers/specs/2026-09-11-shiplog-design.md`
 
 3. **GitHub Action** (`.github/workflows/shiplog.yml`, on push to `main`)
    - validate → anonymize gate → setup-hugo (latest) → `hugo --minify` → deploy Pages (official actions config)
-   - Telegram step: new `.md` files under `content/posts/` added in push (git diff A) → build HTML message from TL;DR (text before `<!--more-->`), send via `sendMessage` Bot API with `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` secrets; continue on send failure but mark step failed
+   - Telegram step: new `.md` files under `content/posts/` added in push (git diff A) → build HTML message from TL;DR (text before `<!--more-->`), send via `appleboy/telegram-action@v1` (pinned) with `format: html`, `disable_web_page_preview: true`, secrets `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`; continue on send failure but mark step failed
 
 4. **shiplog-draft skill** (`~/.claude/skills/shiplog-draft/SKILL.md`)
    - Trigger: "write post", "document this project", "shiplog draft"
@@ -31,6 +31,10 @@ Spec: `docs/superpowers/specs/2026-09-11-shiplog-design.md`
    - Push → verify: site live at `https://<user>.github.io/shiplog/`, TL;DR on list, Telegram message correct
    - Plant "account 123456" → gate blocks → remove → passes
    - Commit hello-world as first real post
+
+## Later (not now)
+
+- `/projects` index page listing all projects (levels.io pattern)
 
 ## Verification
 
