@@ -3,3 +3,5 @@
 .messages/
 public/
 resources/
+bug-bounty/
+.hugo_build.lock
