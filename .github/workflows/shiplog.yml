@@ -1,0 +1,126 @@
+name: shiplog
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      new_posts: ${{ steps.newposts.outputs.slugs }}
+      new_count: ${{ steps.newposts.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate frontmatter
+        run: python scripts/validate_posts.py
+
+      - name: Anonymization gate
+        run: python scripts/check_anonymized.py
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "0.146.0"
+          extended: true
+
+      - name: Build site
+        run: hugo --minify --gc
+
+      - name: Detect newly published posts and build Telegram messages
+        id: newposts
+        env:
+          BASE_URL: https://${{ github.repository_owner }}.github.io/shiplog
+        run: |
+          set -euo pipefail
+          before="${{ github.event.before }}"
+          zero="0000000000000000000000000000000000000000"
+          if [ -z "$before" ] || [ "$before" = "$zero" ]; then
+            range_files=$(git ls-files 'content/posts/*.md')
+          else
+            range_files=$(git diff --name-only --diff-filter=ACMR "$before" HEAD -- 'content/posts/*.md')
+          fi
+          published=""
+          for f in $range_files; do
+            [ -f "$f" ] || continue
+            if grep -q '^draft: true' "$f"; then continue; fi
+            is_new=1
+            if [ "$before" != "$zero" ] && [ -n "$before" ]; then
+              if git cat-file -e "$before:$f" 2>/dev/null; then
+                # file existed before: only announce if draft flipped to false in this push
+                if ! git diff "$before" HEAD -- "$f" | grep -q '^+.*draft: false'; then is_new=0; fi
+              fi
+            fi
+            if [ "$is_new" = "1" ]; then published="$published $f"; fi
+          done
+          if [ -n "$published" ]; then
+            python scripts/build_telegram_messages.py $published --base-url "$BASE_URL"
+            slugs=$(ls .messages | sed 's/\.html$//' | jq -R -s 'split("\n") | map(select(length > 0))')
+          else
+            slugs='[]'
+          fi
+          count=$(echo "$slugs" | jq 'length')
+          echo "slugs=$slugs" >> "$GITHUB_OUTPUT"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "new posts: $slugs"
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Upload messages artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: messages
+          path: .messages/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  notify:
+    needs: [build, deploy]
+    if: needs.build.outputs.new_count != '0' && needs.build.outputs.new_count != ''
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        slug: ${{ fromJSON(needs.build.outputs.new_posts) }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: messages
+
+      - name: Announce to Telegram
+        continue-on-error: true
+        uses: appleboy/telegram-action@v1.1.1
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: html
+          disable_web_page_preview: true
+          message_file: ${{ matrix.slug }}.html

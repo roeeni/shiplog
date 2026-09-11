@@ -1,0 +1,6 @@
+# Extra anonymization terms — one regex per line, case-insensitive.
+# Built-in rules already cover: emails, IPv4, account numbers,
+# credential assignments, Telegram bot tokens.
+# Examples:
+# somebroker
+# my-server-\d+

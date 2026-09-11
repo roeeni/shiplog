@@ -1,0 +1,5 @@
+# Local tooling
+.tools/
+.messages/
+public/
+resources/
