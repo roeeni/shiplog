@@ -67,11 +67,11 @@ jobs:
           done
           if [ -n "$published" ]; then
             python scripts/build_telegram_messages.py $published --base-url "$BASE_URL"
-            slugs=$(ls .messages | sed 's/\.html$//' | jq -R -s 'split("\n") | map(select(length > 0))')
+            slugs=$(ls .messages | sed 's/\.html$//' | jq -R -s -c 'split("\n") | map(select(length > 0))')
           else
             slugs='[]'
           fi
-          count=$(echo "$slugs" | jq 'length')
+          count=$(echo "$slugs" | jq -c 'length')
           echo "slugs=$slugs" >> "$GITHUB_OUTPUT"
           echo "count=$count" >> "$GITHUB_OUTPUT"
           echo "new posts: $slugs"
