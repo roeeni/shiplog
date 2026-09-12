@@ -5,3 +5,9 @@ public/
 resources/
 bug-bounty/
 .hugo_build.lock
+
+# Unrelated project living in this workspace — not part of the public Ship Log
+ablit-balance/
+
+# Internal status doc — local only
+docs/superpowers/HANDOFF.md
