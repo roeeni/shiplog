@@ -3,7 +3,7 @@ title: "Ship Log: hello world"
 date: 2026-09-11
 tags: [meta]
 project: shiplog
-draft: true
+draft: false
 ---
 ## TL;DR
 - Ship Log is live: a build-in-public log of every project, with a TL;DR and the technical details.
