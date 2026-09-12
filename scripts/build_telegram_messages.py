@@ -29,11 +29,18 @@ def parse_post(path: Path):
     fm = {}
     for line in text[4:end].splitlines():
         key, _, value = line.partition(":")
-        fm[key.strip()] = value.strip()
+        fm[key.strip()] = unquote_scalar(value.strip())
     body = text[end + 5:]
     more = body.find("<!--more-->")
     tldr = body[:more] if more != -1 else body
     return fm, tldr
+
+
+def unquote_scalar(value: str) -> str:
+    """Strip matching surrounding quotes from a YAML scalar."""
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        return value[1:-1]
+    return value
 
 
 def tldr_to_plain(tldr: str) -> str:
